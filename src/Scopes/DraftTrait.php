@@ -5,7 +5,7 @@ trait DraftTrait
 {
     /**
      */
-    public static function bootDraftListingsTrait()
+    public static function bootDraftTrait()
     {
         static::addGlobalScope(new DraftScope());
     }
@@ -29,7 +29,7 @@ trait DraftTrait
     {
         $instance = new static();
 
-        return with($instance)->newQueryWithoutScope(new DraftScope())->where($instance->getQualifiedDraftColumn(), '1');
+        return with($instance)->newQueryWithoutScope(new DraftScope())->where($instance->getQualifiedDraftColumn(), 1);
     }
 
     /**
@@ -39,9 +39,6 @@ trait DraftTrait
      */
     public function getQualifiedDraftColumn()
     {
-        $table  = $this->getTable();
-        $column = $table.'.is_draft';
-
-        return $column;
+        return $this->getTable().'.is_draft';
     }
 }

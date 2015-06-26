@@ -2,6 +2,7 @@
 namespace Arrounded\Database\Scopes;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ScopeInterface;
 
 /**
@@ -9,21 +10,25 @@ use Illuminate\Database\Eloquent\ScopeInterface;
  */
 class DraftScope implements ScopeInterface
 {
+
     /**
      * All of the extensions to be added to the builder.
      *
-     * @type array
+     * @var array
      */
     protected $extensions = ['WithDrafts', 'OnlyDrafts'];
 
     /**
      * Apply the scope to a given Eloquent query builder.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $builder
+     * @param  \Illuminate\Database\Eloquent\Builder $builder
+     * @param  \Illuminate\Database\Eloquent\Model   $model
+     *
+     * @return void
      */
-    public function apply(Builder $builder)
+    public function apply(Builder $builder, Model $model)
     {
-        $builder->where($this->getDraftColumn($builder), '=', '0');
+        $builder->where($model->getQualifiedDraftColumn(), 0);
 
         $this->extend($builder);
     }
@@ -31,58 +36,28 @@ class DraftScope implements ScopeInterface
     /**
      * Remove the scope from the given Eloquent query builder.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $builder
-     */
-    public function remove(Builder $builder)
-    {
-        $query    = $builder->getQuery();
-        $bindings = $builder->getBindings();
-
-        foreach ((array) $query->wheres as $key => $where) {
-            if ($where['column'] == $this->getDraftColumn($builder)) {
-                unset($query->wheres[$key]);
-                unset($bindings[$key]);
-                $query->wheres = array_values($query->wheres);
-            }
-        }
-
-        $query->setBindings($bindings);
-    }
-
-    /**
-     * Add the withDrafts extension to the builder.
+     * @param  \Illuminate\Database\Eloquent\Builder $builder
+     * @param  \Illuminate\Database\Eloquent\Model   $model
      *
-     * @param \Illuminate\Database\Eloquent\Builder $builder
+     * @return void
      */
-    protected function addWithDrafts(Builder $builder)
+    public function remove(Builder $builder, Model $model)
     {
-        $builder->macro('withDrafts', function (Builder $builder) {
-            $this->remove($builder);
+        $column = $model->getQualifiedDraftColumn();
 
-            return $builder;
-        });
-    }
+        $query = $builder->getQuery();
 
-    /**
-     * Add the onlyDrafts extension to the builder.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $builder
-     */
-    protected function addOnlyDrafts(Builder $builder)
-    {
-        $builder->macro('onlyDrafts', function (Builder $builder) {
-            $this->remove($builder);
-
-            $builder->getQuery()->where($this->getDraftColumn($builder), '1');
-
-            return $builder;
-        });
+        $query->wheres = collect($query->wheres)->reject(function ($where) use ($column) {
+            return $this->isDraftConstraint($where, $column);
+        })->values()->all();
     }
 
     /**
      * Extend the query builder with the needed functions.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $builder
+     * @param  \Illuminate\Database\Eloquent\Builder $builder
+     *
+     * @return void
      */
     public function extend(Builder $builder)
     {
@@ -92,10 +67,51 @@ class DraftScope implements ScopeInterface
     }
 
     /**
-     * @return string
+     * Add the with-trashed extension to the builder.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder $builder
+     *
+     * @return void
      */
-    protected function getDraftColumn(Builder $builder)
+    protected function addWithDrafts(Builder $builder)
     {
-        return $builder->getModel()->getQualifiedDraftColumn();
+        $builder->macro('withDrafts', function (Builder $builder) {
+            $this->remove($builder, $builder->getModel());
+
+            return $builder;
+        });
+    }
+
+    /**
+     * Add the only-trashed extension to the builder.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder $builder
+     *
+     * @return void
+     */
+    protected function addOnlyDrafts(Builder $builder)
+    {
+        $builder->macro('onlyDrafts', function (Builder $builder) {
+            $model = $builder->getModel();
+
+            $this->remove($builder, $model);
+
+            $builder->getQuery()->where($model->getQualifiedDraftColumn(), 0);
+
+            return $builder;
+        });
+    }
+
+    /**
+     * Determine if the given where clause is a drafts constraint.
+     *
+     * @param  array  $where
+     * @param  string $column
+     *
+     * @return bool
+     */
+    protected function isDraftConstraint(array $where, $column)
+    {
+        return $where['type'] == 0 && $where['column'] == $column;
     }
 }
