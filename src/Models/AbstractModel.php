@@ -1,9 +1,9 @@
 <?php
 namespace Arrounded\Database\Models;
 
-use Arrounded\Collection;
-use Arrounded\Interfaces\ValidatableInterface;
-use Arrounded\Traits\Reflection\ReflectionModel;
+use Arrounded\Database\Collection;
+use Arrounded\Database\Interfaces\ValidatableInterface;
+use Arrounded\Reflection\Entities\Traits\ReflectionModel;
 use Illuminate\Database\Eloquent\Model;
 
 abstract class AbstractModel extends Model implements ValidatableInterface
@@ -32,11 +32,6 @@ abstract class AbstractModel extends Model implements ValidatableInterface
      */
     public function newCollection(array $models = [])
     {
-        $custom = $this->getNamespace().'\Collection';
-        if (class_exists($custom)) {
-            return new $custom($models);
-        }
-
         return new Collection($models);
     }
 

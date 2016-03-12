@@ -1,5 +1,5 @@
 <?php
-namespace Arrounded\Traits;
+namespace Arrounded\Database\Traits;
 
 use Hash;
 use Illuminate\Auth\Authenticatable as CoreAuthenticatable;
