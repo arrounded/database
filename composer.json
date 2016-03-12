@@ -19,8 +19,9 @@
     },
     "require-dev": {
         "fabpot/php-cs-fixer": "2.0.*@dev",
-        "phpunit/phpunit": "^4.7",
+        "league/fractal": "^0.13.0",
         "mockery/mockery": "^0.9.4",
+        "phpunit/phpunit": "^4.7",
         "symfony/var-dumper": "^3.0"
     },
     "autoload": {
