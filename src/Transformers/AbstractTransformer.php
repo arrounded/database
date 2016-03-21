@@ -50,9 +50,9 @@ class AbstractTransformer extends TransformerAbstract
             if ($related instanceof Collection) {
                 $transformer = $related->first() ? $related->first()->getTransformer() : new DefaultTransformer();
 
-                return $this->collection($related, $transformer);
+                return $this->collection($related, $transformer, strtolower($relation));
             } else {
-                return $this->item($related, $related->getTransformer());
+                return $this->item($related, $related->getTransformer(), strtolower($relation));
             }
         }
     }

@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.3.1
+### Fixed
+- Missing relation name argument in `AbstractTransformer`
+
 ## 0.3.0
 ### Added
 - Add `AbstractTransformer`
